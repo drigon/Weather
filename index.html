@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weather Project by Rodrigo Castilho Ishii</title>
+
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+    integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+  <style>
+    #map {
+      width: 100%; 
+      height: 400px; 
+    }
+    .error_input {
+      border: 1px solid #F00;
+    }
+    .success_input {
+      border: 1px solid #3498DB;
+    }
+    .input_error_msg{
+      color: red; 
+      text-align: left; 
+      margin: 5px 0 0; 
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <main role="main" id="app">
+    <div class="container">
+      <div class="pt-5 pb-3 text-center">
+        <img class="d-block mx-auto mb-4"
+          src="https://corekara.co.jp/wp-content/themes/corekara_corporate3/home/img/logo.png" alt="Corekara"
+          width="170" height="21">
+        <p>Weather Project by <u>Rodrigo Castilho Ishii</u></p>
+      </div>
+    </div>
+
+    <section class="jumbotron text-center pb-4 pt-4 mb-1">
+      <div class="container">
+        <div class="row mb-2">
+          <div class="col-md-8 offset-md-2">
+            <p class="text-left mb-2">Check the weather in your area!</p>
+            <div class="input-group">
+              <input v-model="searchedCode" type="text" class="form-control" placeholder="Postcode, ex: 182-0024"
+                :class="[validInput ? 'error_input' : 'success_input']" required>                
+              <div class="input-group-append">
+                <button @click="searchPostCode" class="btn btn-primary" type="button">
+                  <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-search" fill="currentColor"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd"
+                      d="M10.442 10.442a1 1 0 0 1 1.415 0l3.85 3.85a1 1 0 0 1-1.414 1.415l-3.85-3.85a1 1 0 0 1 0-1.415z" />
+                    <path fill-rule="evenodd"
+                      d="M6.5 12a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11zM13 6.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <p class="input_error_msg" v-if="validInput">Please insert a valid Japanese Postcode!</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="container">
+      <div class="row mb-2">
+        <div class="col">
+          <h4 class="mt-4">3 days forecast:</h4>
+          <h2 v-if="addressObj">{{ addressName }}</h2>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-4" v-for="(weather, index) in weatherObj" :key="index" v-if="index < 3">
+          <div class="card mb-4 shadow-sm" :class="[index == 0 ? 'border-info' : '']">
+            <div class="card-body">
+              <div class="text-center mt-1">
+                <img height="100" width="100" v-bind:src="imageUrl(weather.weather.icon)"
+                  v-bind:alt="weather.weather.description">
+              </div>
+              <p class="text-muted text-center">{{ weather.valid_date.slice(5, 11).replace("-", "/") }}
+                {{getDayOfWeek(weather.valid_date)}}</p>
+              <h5 class="card-title text-center">{{ weather.weather.description }}</h5>
+              <hr>
+              <div class="row">
+                <div class="col-6">
+                  <p class="card-text text-center">Min: {{ weather.min_temp }}° <svg width="1em" height="1em"
+                      viewBox="0 0 16 16" class="bi bi-thermometer" fill="#0F7DD6" xmlns="http://www.w3.org/2000/svg">
+                      <path fill-rule="evenodd"
+                        d="M6 2a2 2 0 1 1 4 0v7.627a3.5 3.5 0 1 1-4 0V2zm2-1a1 1 0 0 0-1 1v7.901a.5.5 0 0 1-.25.433A2.499 2.499 0 0 0 8 15a2.5 2.5 0 0 0 1.25-4.666.5.5 0 0 1-.25-.433V2a1 1 0 0 0-1-1z" />
+                      <path d="M9.5 12.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z" />
+                    </svg></p>
+                </div>
+                <div class="col-6">
+                  <p class="card-text text-center">Max: {{ weather.max_temp }}° <svg width="1em" height="1em"
+                      viewBox="0 0 16 16" class="bi bi-thermometer-half" fill="red" xmlns="http://www.w3.org/2000/svg">
+                      <path fill-rule="evenodd"
+                        d="M6 2a2 2 0 1 1 4 0v7.627a3.5 3.5 0 1 1-4 0V2zm2-1a1 1 0 0 0-1 1v7.901a.5.5 0 0 1-.25.433A2.499 2.499 0 0 0 8 15a2.5 2.5 0 0 0 1.25-4.666.5.5 0 0 1-.25-.433V2a1 1 0 0 0-1-1z" />
+                      <path d="M9.5 12.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z" />
+                      <path fill-rule="evenodd"
+                        d="M8 1.75a.25.25 0 0 1 .25.25v10a.25.25 0 1 1-.5 0V2A.25.25 0 0 1 8 1.75z" />
+                    </svg></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <hr>
+    </div>
+
+    <div class="container">
+      <div class="row">
+        <div class="col-md-6">
+          <p class="lead mt-4">Map</p>
+          <div id="map"></div>
+        </div>
+        <div class="col-md-6">
+          <p class="lead mt-4" v-if="addressObj">Covid 19 cases in: <span v-if="covidObj">{{ addressObj.data.data[0].pref }} ({{ covidObj.name_en }})</span></p>
+          <table class="table">
+            <tbody>
+              <tr>
+                <th scope="row">Population</th>
+                <td><span v-if="covidObj">{{ covidObj.population | numberWithCommas }}</span></td>
+              </tr>
+              <tr>
+                <th scope="row">Tested</th>
+                <td><span v-if="covidObj">{{ covidObj.pcr | numberWithCommas }}</span></td>
+              </tr>
+              <tr>
+                <th scope="row">Cases</th>
+                <td><span v-if="covidObj">{{ covidObj.cases | numberWithCommas }}</span></td>
+              </tr>
+              <tr>
+                <th scope="row">Deaths</th>
+                <td><span v-if="covidObj">{{ covidObj.deaths | numberWithCommas }}</span></td>
+              </tr>
+              <tr>
+                <th scope="row">Recovered</th>
+                <td><span v-if="covidObj">{{ covidObj.discharge | numberWithCommas }}</span></td>
+              </tr>
+              <tr>
+                <th scope="row">Hospitalize</th>
+                <td><span v-if="covidObj">{{ covidObj.hospitalize | numberWithCommas }}</span></td>
+              </tr>
+              <tr>
+                <th scope="row">Severe</th>
+                <td><span v-if="covidObj">{{ covidObj.severe | numberWithCommas }}</span></td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="lead">Be safe! ❤️</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="mt-5">
+    <div class="container">
+      <p class="text-center">Sample Project by Rodrigo Castilho Ishii</p>
+    </div>
+  </footer>
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+  <script>
+  var app = new Vue({
+      el: '#app',
+      data() {
+        return {
+          addressObj: null,
+          searchedCode: '',
+          weatherObj: null,
+          covidObj: null
+        }
+      },
+      mounted() {
+        this.searchPostCode()
+      },
+      computed: {
+        addressName: function () {
+          let fullAddress = this.addressObj.data.data[0].pref + ', ' + this.addressObj.data.data[0].city + ', ' +
+            this.addressObj.data.data[0].town
+
+          return fullAddress
+        },
+        validInput: function () {
+          let inputNumber = this.searchedCode.replace("-", "")
+          if(inputNumber.length > 8 || isNaN(inputNumber) == true){
+            return true
+          }
+          return false
+        }
+      },
+      filters:{
+        numberWithCommas: function(x) {
+          return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+        }
+      },
+      methods: {
+        searchPostCode() {
+          let postCode = this.searchedCode.replace("-", "")
+
+          if (postCode.length != 7) {
+            postCode = '1600022'
+          }
+
+          axios
+            .get('https://apis.postcode-jp.com/api/v3/postcodes?apikey=NQhgkOpZ7CCvedqyonI5RuKTXjMMEtoCeBauEEq&postcode=' + postCode)
+            .then(response => {
+              this.addressObj = response
+
+              let latitude = response.data.data[0].location.latitude
+              let longitude = response.data.data[0].location.longitude
+              //Start Map
+              initMap({
+                lat: latitude,
+                lng: longitude
+              })
+              //Start Weather
+              this.getWeatherForcast(latitude, longitude)
+              //Start Covid Stats
+              this.getCovidStats(this.addressObj.data.data[0].pref)
+            })
+            
+        },
+        getWeatherForcast(lat, long) {
+          axios
+            .get('https://api.weatherbit.io/v2.0/forecast/daily?lat=' + lat + '&lon=' + long + '&key=7f3d19d5658d4ab6bd2d3cb2ce71177f')
+            .then(response => {
+              this.weatherObj = response.data.data
+              return response
+            })
+        },
+        getCovidStats(pref) {
+          let province = pref.slice(0, -1)
+          axios
+            .get('https://covid19-japan-web-api.now.sh/api/v1/prefectures')
+            .then(response => {
+              let stats = response.data.find((state, index) => {
+                if(state.name_ja == province)
+                  return state
+              })
+              this.covidObj = stats
+            })
+        },
+        imageUrl(img) {
+          return 'https://www.weatherbit.io/static/img/icons/' + img + '.png'
+        },
+        getDayOfWeek(date) {
+          const dayOfWeek = new Date(date).getDay()
+          return isNaN(dayOfWeek) ? null : ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
+            'Saturday'
+          ][dayOfWeek]
+        }
+      }
+    })
+  </script>
+
+  <script>
+    // Initialize and add the map
+    function initMap(mapObj) {
+      var location = mapObj
+      // The map, centered at location
+      var map = new google.maps.Map(
+        document.getElementById('map'), {
+          zoom: 15,
+          center: location
+        })
+      // The marker, positioned at location
+      var marker = new google.maps.Marker({
+        position: location,
+        map: map
+      })
+    }
+  </script>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCHB4xVEC-ZC4T6hyzty3CcMPUtUBgBr3o"></script>
+
+</body>
+
+</html>
+
