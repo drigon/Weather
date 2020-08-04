@@ -1,13 +1,15 @@
-Created by Rodrigo Castilho Ishii
+# Weather in Japan by postcode + Covid-19 stats
 
-It was used:
+## Created by Rodrigo Castilho Ishii
+
+# It was used:
 
 HTML
 CSS
 Javasript
 VueJS
 Axios
-Bootstrap (CSS Only for styling
+Bootstrap (CSS Only for styling)
 
 - APIs
 Google Maps
